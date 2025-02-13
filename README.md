@@ -117,3 +117,69 @@ public class StaticTransactionTypeCodeDescLoaderTest {
         assertNull(loader.getValue("NonExistent", "SS1", "CI1")); // Test for null return
     }
 }
+
+
+
+
+
+
+
+
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils; // Import for mocking connection
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class StaticTransactionTypeCodeDescLoaderTest {
+
+    @Mock
+    private DataSource mockDataSource;
+
+    @Mock
+    private Connection mockConnection; // Mock the Connection
+    
+    @Mock
+    private PreparedStatement mockPreparedStatement; // Mock the PreparedStatement
+
+    @Mock
+    private ResultSet mockResultSet;
+
+
+    @Test
+    public void testConstructor_loadsDataFromDatabase() throws SQLException {
+        // Setup
+        when(mockDataSource.getConnection()).thenReturn(mockConnection); // Return the mock connection
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement); // Return the mock statement
+        when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet); // Return the mock result set
+
+        when(mockResultSet.getString("SOURCE_VALUE")).thenReturn("SV1");
+        when(mockResultSet.getString("SOURCE_SYSTEM_CD")).thenReturn("SS1");
+        when(mockResultSet.getString("CASH_IND")).thenReturn("CI1");
+        when(mockResultSet.getString("TXN_TYPE_DESC")).thenReturn("Description 1");
+
+        // Execute
+        StaticTransactionTypeCodeDescLoader loader = new StaticTransactionTypeCodeDescLoader(mockDataSource);
+
+        // Assert
+        String key = loader.generateKey("SV1", "SS1", "CI1");
+        assertEquals("Description 1", loader.getValue("SV1", "SS1", "CI1"));
+        assertNotNull(loader.transactionTypeCodeDescTable);
+        assertEquals(1, loader.transactionTypeCodeDescTable.size());
+    }
+
+    // ... (Other test methods: testConstructor_emptyResult, testGenerateKey, testGetValue)
+    // ... (These remain largely the same, but you may want to use the updated setup)
+}
